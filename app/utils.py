@@ -1,10 +1,11 @@
-# utils.py
+# app/utils.py
 import cv2
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 import mediapipe as mp
 import os
+import pandas as pd
 from django.conf import settings
 
 mp_drawing = mp.solutions.drawing_utils
@@ -68,17 +69,22 @@ def display_predictions(image, labels, probabilities):
     for i in range(len(labels)):
         cv2.putText(image, f"{labels[i]}: {probabilities[i]:.2f}%", (50, 100 + i * 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
-def generate_video_frames(video_path):
-    cap = cv2.VideoCapture(video_path)
+def generate_webcam_frames():
+    cap = cv2.VideoCapture(0)
     if not cap.isOpened():
-        print("Error: Could not open video.")
+        print("Error: Could not open webcam.")
         return
     
     while True:
         success, frame = cap.read()
         if not success:
+            print("Error: Failed to capture image.")
             break
         
+        # Log frame capture success
+        print("Frame captured successfully")
+
+        # Preprocess image
         vector, hand_landmarks = preprocess_image(frame)
         if vector is not None:
             predicted_labels, predicted_probabilities = predict(vector)
@@ -86,20 +92,34 @@ def generate_video_frames(video_path):
             for landmarks in hand_landmarks:
                 mp_drawing.draw_landmarks(frame, landmarks, mp_hands.HAND_CONNECTIONS)
 
+        # Encode frame
         ret, buffer = cv2.imencode('.jpg', frame)
         if not ret:
             print("Error: Failed to encode image.")
             break
         
         frame = buffer.tobytes()
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+        
+        # Log encoded frame success
+        print("Frame encoded successfully: ", frame[:30])  # Log the first 30 bytes of the frame
+
+        yield frame
     cap.release()
 
-def generate_webcam_frames():
-    cap = cv2.VideoCapture(0)
+def process_image(image_path):
+    image = cv2.imread(image_path)
+    vector, hand_landmarks = preprocess_image(image)
+    if vector is not None:
+        predicted_labels, predicted_probabilities = predict(vector)
+        display_predictions(image, predicted_labels, predicted_probabilities)
+        for landmarks in hand_landmarks:
+            mp_drawing.draw_landmarks(image, landmarks, mp_hands.HAND_CONNECTIONS)
+    return image
+
+def generate_video_frames(video_path):
+    cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
-        print("Error: Could not open webcam.")
+        print("Error: Could not open video.")
         return
     
     while True:
@@ -121,6 +141,5 @@ def generate_webcam_frames():
             break
         
         frame = buffer.tobytes()
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+        yield frame
     cap.release()

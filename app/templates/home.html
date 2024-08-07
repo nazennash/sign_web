@@ -1,45 +1,125 @@
 <!-- templates/home.html -->
-<!DOCTYPE html>
-{% load static %}
-<html lang="en">
+{% extends 'base.html' %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
-    <link rel="stylesheet" href="{% static 'styles.css' %}">
-</head>
+{% block title %}Home{% endblock %}
 
-<body>
-    <div class="container">
-        <h1>Welcome to the Video and Webcam Processing App</h1>
-        <div>
-            <button onclick="openWebcam()">Start Webcam</button>
-            <iframe id="webcamFrame" style="display:none; width:100%; height:480px;" src=""></iframe>
-        </div>
-        <div>
-            <button onclick="showUploadForm()">Upload Video</button>
-            <div id="uploadForm" style="display:none;">
-                <form method="post" enctype="multipart/form-data" action="{% url 'upload_video' %}">
-                    {% csrf_token %}
-                    {{ form.as_p }}
-                    <button type="submit">Upload</button>
-                </form>
-            </div>
+{% block content %}
+<div class="text-center">
+    <h1 class="text-3xl font-bold mb-6">Welcome to the Video and Webcam Processing App</h1>
+
+    <div class="mb-4">
+        <button id="startWebcam" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            Start Webcam
+        </button>
+        <button id="stopWebcam" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+            Stop Webcam
+        </button>
+    </div>
+
+    <div id="webcamContainer" style="display:none;">
+        <img id="webcamFeed" class="w-full h-96 border-2 border-gray-300" src="">
+        <div id="predictions" class="mt-4 text-left">
+            <!-- Predictions will be inserted here -->
         </div>
     </div>
-    <script>
-        function openWebcam() {
-            var frame = document.getElementById('webcamFrame');
-            frame.src = "{% url 'video_feed' %}";
-            frame.style.display = 'block';
-        }
 
-        function showUploadForm() {
-            var form = document.getElementById('uploadForm');
-            form.style.display = 'block';
-        }
-    </script>
-</body>
+    <div class="mt-6">
+        <button onclick="showUploadVideoForm()"
+            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+            Upload Video
+        </button>
+        <div id="uploadVideoForm" style="display:none;">
+            <form method="post" enctype="multipart/form-data" action="{% url 'upload_video' %}" class="mt-4">
+                {% csrf_token %}
+                {{ video_form.as_p }}
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    Upload
+                </button>
+            </form>
+        </div>
+    </div>
 
-</html>
+    <div class="mt-6">
+        <button onclick="showUploadImageForm()"
+            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+            Upload Image
+        </button>
+        <div id="uploadImageForm" style="display:none;">
+            <form method="post" enctype="multipart/form-data" action="{% url 'upload_image' %}" class="mt-4">
+                {% csrf_token %}
+                {{ image_form.as_p }}
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    Upload
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="mt-6">
+        {% if video_name %}
+        <video class="w-full h-96 border-2 border-gray-300" controls>
+            <source src="{{ MEDIA_URL }}{{ video_name }}" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        {% endif %}
+    </div>
+
+    <div class="mt-6">
+        {% if image_name %}
+        <img class="w-full h-96 border-2 border-gray-300" src="{% url 'process_image' image_name=image_name %}">
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    let socket;
+
+    function openWebcam() {
+        document.getElementById('webcamContainer').style.display = 'block';
+        socket = new WebSocket('ws://' + window.location.host + '/ws/video_feed/');
+
+        socket.onmessage = function (e) {
+            const data = JSON.parse(e.data);
+
+            // Log received frame data
+            console.log("Frame data received", data.frame.substring(0, 30)); // Log first 30 chars of the frame data
+
+            document.getElementById('webcamFeed').src = 'data:image/jpeg;base64,' + data.frame;
+            console.log("Frame received and set")
+        };
+
+        socket.onerror = function (error) {
+            console.error('WebSocket error:', error);
+        };
+
+        socket.onopen = function () {
+            socket.send(JSON.stringify({ 'command': 'start' }));
+            console.log("WebSocket connection opened");
+        };
+
+        socket.onclose = function () {
+            socket = null;
+            console.log("WebSocket connection closed");
+        };
+    }
+
+    function closeWebcam() {
+        document.getElementById('webcamContainer').style.display = 'none';
+        if (socket) {
+            socket.send(JSON.stringify({ 'command': 'stop' }));
+            socket.close();
+        }
+    }
+
+    function showUploadVideoForm() {
+        document.getElementById('uploadVideoForm').style.display = 'block';
+    }
+
+    function showUploadImageForm() {
+        document.getElementById('uploadImageForm').style.display = 'block';
+    }
+
+    document.getElementById('startWebcam').addEventListener('click', openWebcam);
+    document.getElementById('stopWebcam').addEventListener('click', closeWebcam);
+</script>
+{% endblock %}
