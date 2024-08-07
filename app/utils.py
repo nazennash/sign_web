@@ -82,7 +82,7 @@ def generate_webcam_frames():
             break
         
         # Log frame capture success
-        print("Frame captured successfully")
+        # print("Frame captured successfully")
 
         # Preprocess image
         vector, hand_landmarks = preprocess_image(frame)
@@ -101,7 +101,7 @@ def generate_webcam_frames():
         frame = buffer.tobytes()
         
         # Log encoded frame success
-        print("Frame encoded successfully: ", frame[:30])  # Log the first 30 bytes of the frame
+        # print("Frame encoded successfully: ", frame[:30])  # Log the first 30 bytes of the frame
 
         yield frame
     cap.release()

@@ -20,11 +20,11 @@ class VideoConsumer(WebsocketConsumer):
                 encoded_frame = base64.b64encode(frame).decode('utf-8')
                 
                 # Log the encoded frame
-                print("Encoded frame: ", encoded_frame[:30])  # Print the first 30 chars of the encoded frame
+                # print("Encoded frame: ", encoded_frame[:30])  # Print the first 30 chars of the encoded frame
                 
                 self.send(text_data=json.dumps({
                     'frame': encoded_frame
                 }))
-                print("Frame sent")
+                # print("Frame sent")
             else:
                 print("No frame captured")
