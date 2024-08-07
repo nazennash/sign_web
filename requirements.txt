@@ -1,0 +1,9 @@
+django
+opencv-python
+numpy
+pandas
+tensorflow
+mediapipe
+pyttsx3
+pytube
+yt-dlp

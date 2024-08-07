@@ -1,0 +1,45 @@
+<!-- templates/home.html -->
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Welcome to the Video and Webcam Processing App</h1>
+        <div>
+            <button onclick="openWebcam()">Start Webcam</button>
+            <iframe id="webcamFrame" style="display:none; width:100%; height:480px;" src=""></iframe>
+        </div>
+        <div>
+            <button onclick="showUploadForm()">Upload Video</button>
+            <div id="uploadForm" style="display:none;">
+                <form method="post" enctype="multipart/form-data" action="{% url 'upload_video' %}">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit">Upload</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        function openWebcam() {
+            var frame = document.getElementById('webcamFrame');
+            frame.src = "{% url 'video_feed' %}";
+            frame.style.display = 'block';
+        }
+
+        function showUploadForm() {
+            var form = document.getElementById('uploadForm');
+            form.style.display = 'block';
+        }
+    </script>
+</body>
+
+</html>
