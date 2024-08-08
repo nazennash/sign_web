@@ -1,4 +1,3 @@
-<!-- templates/home.html -->
 {% extends 'base.html' %}
 
 {% block title %}Home{% endblock %}
@@ -59,9 +58,13 @@
         {% if video_name %}
         <button id="playVideo" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
             onclick="startVideo('{{ video_name }}')">Play Video</button>
+        <button id="stopVideo" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+            onclick="stopVideo()">Stop Video</button>
         {% elif youtube_url %}
         <button id="playYoutubeVideo" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
             onclick="startVideo('{{ youtube_url }}')">Play YouTube Video</button>
+        <button id="stopYoutubeVideo" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+            onclick="stopVideo()">Stop YouTube Video</button>
         {% endif %}
     </div>
 
@@ -76,6 +79,8 @@
         {% if image_name %}
         <button id="startImage" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
             onclick="startImage('{{ image_name }}')">Start Image</button>
+        <button id="stopImage" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+            onclick="stopImage()">Stop Image</button>
         {% endif %}
     </div>
 
@@ -90,7 +95,18 @@
 <script>
     let socket;
 
+    function closeAllStreams() {
+        if (socket) {
+            socket.send(JSON.stringify({ 'command': 'stop' }));
+            socket.close();
+        }
+        document.getElementById('webcamContainer').style.display = 'none';
+        document.getElementById('videoContainer').style.display = 'none';
+        document.getElementById('imageContainer').style.display = 'none';
+    }
+
     function openWebcam() {
+        closeAllStreams();
         document.getElementById('webcamContainer').style.display = 'block';
         socket = new WebSocket('ws://' + window.location.host + '/ws/video_feed/');
 
@@ -112,15 +128,12 @@
         };
     }
 
-    function closeWebcam() {
-        document.getElementById('webcamContainer').style.display = 'none';
-        if (socket) {
-            socket.send(JSON.stringify({ 'command': 'stop' }));
-            socket.close();
-        }
+    function stopWebcam() {
+        closeAllStreams();
     }
 
     function startVideo(videoPath) {
+        closeAllStreams();
         document.getElementById('videoContainer').style.display = 'block';
         socket = new WebSocket('ws://' + window.location.host + '/ws/video_feed/');
 
@@ -142,7 +155,12 @@
         };
     }
 
+    function stopVideo() {
+        closeAllStreams();
+    }
+
     function startImage(imagePath) {
+        closeAllStreams();
         document.getElementById('imageContainer').style.display = 'block';
         socket = new WebSocket('ws://' + window.location.host + '/ws/video_feed/');
 
@@ -164,6 +182,10 @@
         };
     }
 
+    function stopImage() {
+        closeAllStreams();
+    }
+
     function showUploadVideoForm() {
         document.getElementById('uploadVideoForm').style.display = 'block';
     }
@@ -173,6 +195,7 @@
     }
 
     document.getElementById('startWebcam').addEventListener('click', openWebcam);
-    document.getElementById('stopWebcam').addEventListener('click', closeWebcam);
+    document.getElementById('stopWebcam').addEventListener('click', stopWebcam);
 </script>
+
 {% endblock %}

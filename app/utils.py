@@ -1,4 +1,3 @@
-# utils.py
 import cv2
 import numpy as np
 import tensorflow as tf
@@ -75,13 +74,13 @@ def generate_webcam_frames():
     if not cap.isOpened():
         print("Error: Could not open webcam.")
         return
-    
-    while True:
+
+    while cap.isOpened():
         success, frame = cap.read()
         if not success:
             print("Error: Failed to capture image.")
             break
-        
+
         # Preprocess image
         vector, hand_landmarks = preprocess_image(frame)
         if vector is not None:
@@ -95,33 +94,23 @@ def generate_webcam_frames():
         if not ret:
             print("Error: Failed to encode image.")
             break
-        
-        frame = buffer.tobytes()
-        yield frame
-    cap.release()
 
-def process_image(image_path):
-    image = cv2.imread(image_path)
-    vector, hand_landmarks = preprocess_image(image)
-    if vector is not None:
-        predicted_labels, predicted_probabilities = predict(vector)
-        display_predictions(image, predicted_labels, predicted_probabilities)
-        for landmarks in hand_landmarks:
-            mp_drawing.draw_landmarks(image, landmarks, mp_hands.HAND_CONNECTIONS)
-    return image
+        yield buffer.tobytes()
+
+    cap.release()
 
 def generate_video_frames(video_path):
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
         print("Error: Could not open video.")
         return
-    
-    while True:
+
+    while cap.isOpened():
         success, frame = cap.read()
         if not success:
             print("Error: Failed to capture image.")
             break
-        
+
         vector, hand_landmarks = preprocess_image(frame)
         if vector is not None:
             predicted_labels, predicted_probabilities = predict(vector)
@@ -133,10 +122,20 @@ def generate_video_frames(video_path):
         if not ret:
             print("Error: Failed to encode image.")
             break
-        
-        frame = buffer.tobytes()
-        yield frame
+
+        yield buffer.tobytes()
+
     cap.release()
+
+def process_image(image_path):
+    image = cv2.imread(image_path)
+    vector, hand_landmarks = preprocess_image(image)
+    if vector is not None:
+        predicted_labels, predicted_probabilities = predict(vector)
+        display_predictions(image, predicted_labels, predicted_probabilities)
+        for landmarks in hand_landmarks:
+            mp_drawing.draw_landmarks(image, landmarks, mp_hands.HAND_CONNECTIONS)
+    return image
 
 def download_youtube_video(youtube_url):
     try:

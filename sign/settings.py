@@ -85,11 +85,15 @@ ASGI_APPLICATION = 'sign.asgi.application'
 
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('127.0.0.1', 6380)],
-        },
-    },
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    }
+    
+    # 'default': {
+    #     'BACKEND': 'channels_redis.core.RedisChannelLayer',
+    #     'CONFIG': {
+    #         "hosts": [('127.0.0.1', 6380)],
+    #     },
+    # },
 }
 
 # Database
