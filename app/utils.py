@@ -7,6 +7,7 @@ import mediapipe as mp
 import os
 import pandas as pd
 from django.conf import settings
+from pytube import YouTube
 
 mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
@@ -139,7 +140,6 @@ def generate_video_frames(video_path):
 
 def download_youtube_video(youtube_url):
     try:
-        from pytubefix import YouTube
         yt = YouTube(youtube_url)
         stream = yt.streams.filter(file_extension='mp4').first()
         output_path = settings.MEDIA_ROOT

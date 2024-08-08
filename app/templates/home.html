@@ -57,22 +57,33 @@
 
     <div class="mt-6">
         {% if video_name %}
-        <video class="w-full h-96 border-2 border-gray-300" controls>
-            <source src="/{{ video_name }}" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
+        <button id="startVideo" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            onclick="startVideo('{{ video_name }}')">Start Video</button>
         {% elif youtube_url %}
-        <video class="w-full h-96 border-2 border-gray-300" controls>
-            <source src="/{{ youtube_url }}" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
+        <button id="startYoutubeVideo" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            onclick="startVideo('{{ youtube_url }}')">Start YouTube Video</button>
         {% endif %}
+    </div>
+
+    <div id="videoContainer" style="display:none;">
+        <img id="videoFeed" class="w-full h-96 border-2 border-gray-300" src="">
+        <div id="videoPredictions" class="mt-4 text-left">
+            <!-- Predictions will be inserted here -->
+        </div>
     </div>
 
     <div class="mt-6">
         {% if image_name %}
-        <img class="w-full h-96 border-2 border-gray-300" src="/{{ image_name }}">
+        <button id="startImage" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            onclick="startImage('{{ image_name }}')">Start Image</button>
         {% endif %}
+    </div>
+
+    <div id="imageContainer" style="display:none;">
+        <img id="imageFeed" class="w-full h-96 border-2 border-gray-300" src="">
+        <div id="imagePredictions" class="mt-4 text-left">
+            <!-- Predictions will be inserted here -->
+        </div>
     </div>
 </div>
 
@@ -93,7 +104,7 @@
         };
 
         socket.onopen = function () {
-            socket.send(JSON.stringify({ 'command': 'start' }));
+            socket.send(JSON.stringify({ 'command': 'start', 'video_type': 'webcam' }));
         };
 
         socket.onclose = function () {
@@ -107,6 +118,50 @@
             socket.send(JSON.stringify({ 'command': 'stop' }));
             socket.close();
         }
+    }
+
+    function startVideo(videoPath) {
+        document.getElementById('videoContainer').style.display = 'block';
+        socket = new WebSocket('ws://' + window.location.host + '/ws/video_feed/');
+
+        socket.onmessage = function (e) {
+            const data = JSON.parse(e.data);
+            document.getElementById('videoFeed').src = 'data:image/jpeg;base64,' + data.frame;
+        };
+
+        socket.onerror = function (error) {
+            console.error('WebSocket error:', error);
+        };
+
+        socket.onopen = function () {
+            socket.send(JSON.stringify({ 'command': 'start', 'video_type': 'video', 'video_path': videoPath }));
+        };
+
+        socket.onclose = function () {
+            socket = null;
+        };
+    }
+
+    function startImage(imagePath) {
+        document.getElementById('imageContainer').style.display = 'block';
+        socket = new WebSocket('ws://' + window.location.host + '/ws/video_feed/');
+
+        socket.onmessage = function (e) {
+            const data = JSON.parse(e.data);
+            document.getElementById('imageFeed').src = 'data:image/jpeg;base64,' + data.frame;
+        };
+
+        socket.onerror = function (error) {
+            console.error('WebSocket error:', error);
+        };
+
+        socket.onopen = function () {
+            socket.send(JSON.stringify({ 'command': 'start', 'video_type': 'image', 'video_path': imagePath }));
+        };
+
+        socket.onclose = function () {
+            socket = null;
+        };
     }
 
     function showUploadVideoForm() {

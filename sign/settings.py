@@ -92,8 +92,6 @@ CHANNEL_LAYERS = {
     },
 }
 
-TAILWIND_APP_NAME = 'theme'
-
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
