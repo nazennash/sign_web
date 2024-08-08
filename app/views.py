@@ -1,13 +1,10 @@
 # views.py
 from django.shortcuts import render, redirect
-from django.http import StreamingHttpResponse, HttpResponse
+from django.http import HttpResponse, StreamingHttpResponse
 from .forms import VideoUploadForm, ImageUploadForm
-from .utils import generate_video_frames, generate_webcam_frames, process_image
+from .utils import generate_video_frames, process_image, download_youtube_video
 from django.conf import settings
 import os
-import time
-import pandas as pd
-import numpy as np
 import cv2
 
 def home(request):
@@ -15,33 +12,46 @@ def home(request):
     image_form = ImageUploadForm()
     video_name = request.GET.get('video_name', None)
     image_name = request.GET.get('image_name', None)
-    return render(request, 'home.html', {'video_form': video_form, 'image_form': image_form, 'video_name': video_name, 'image_name': image_name})
-
-def video_feed(request):
-    try:
-        return StreamingHttpResponse(generate_webcam_frames(), content_type='multipart/x-mixed-replace; boundary=frame')
-    except Exception as e:
-        print(f"Error: {e}")
-        return render(request, 'error.html', {'error_message': str(e)})
+    youtube_url = request.GET.get('youtube_url', None)
+    return render(request, 'home.html', {
+        'video_form': video_form,
+        'image_form': image_form,
+        'video_name': video_name,
+        'image_name': image_name,
+        'youtube_url': youtube_url,
+    })
 
 def upload_and_process_video(request):
     if request.method == 'POST':
         form = VideoUploadForm(request.POST, request.FILES)
         if form.is_valid():
-            video_file = request.FILES['video']
-            video_path = os.path.join(settings.MEDIA_ROOT, video_file.name)
-            with open(video_path, 'wb+') as destination:
-                for chunk in video_file.chunks():
-                    destination.write(chunk)
-            return redirect(f'/?video_name={video_file.name}')
+            youtube_url = form.cleaned_data.get('youtube_url')
+            if youtube_url:
+                filename = download_youtube_video(youtube_url)
+                if filename:
+                    return redirect(f'/?youtube_url={filename}')
+            else:
+                video_file = request.FILES['video']
+                video_path = os.path.join(settings.MEDIA_ROOT, video_file.name)
+                with open(video_path, 'wb+') as destination:
+                    for chunk in video_file.chunks():
+                        destination.write(chunk)
+                return redirect(f'/?video_name={video_file.name}')
     else:
         form = VideoUploadForm()
     
     return render(request, 'home.html', {'video_form': form})
 
 def process_video(request, video_name):
-    video_path = os.path.join('.', 'media', video_name)
+    video_path = os.path.join(settings.MEDIA_ROOT, video_name)
     return StreamingHttpResponse(generate_video_frames(video_path), content_type='multipart/x-mixed-replace; boundary=frame')
+
+def process_youtube_video(request, youtube_url):
+    video_path = os.path.join(settings.MEDIA_ROOT, youtube_url)
+    if os.path.exists(video_path):
+        return StreamingHttpResponse(generate_video_frames(video_path), content_type='multipart/x-mixed-replace; boundary=frame')
+    else:
+        return render(request, 'error.html', {'error_message': 'Video not found'})
 
 def upload_and_process_image(request):
     if request.method == 'POST':

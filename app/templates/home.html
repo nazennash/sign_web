@@ -26,7 +26,7 @@
     <div class="mt-6">
         <button onclick="showUploadVideoForm()"
             class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-            Upload Video
+            Upload Video or YouTube URL
         </button>
         <div id="uploadVideoForm" style="display:none;">
             <form method="post" enctype="multipart/form-data" action="{% url 'upload_video' %}" class="mt-4">
@@ -58,7 +58,12 @@
     <div class="mt-6">
         {% if video_name %}
         <video class="w-full h-96 border-2 border-gray-300" controls>
-            <source src="{{ MEDIA_URL }}{{ video_name }}" type="video/mp4">
+            <source src="/{{ video_name }}" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        {% elif youtube_url %}
+        <video class="w-full h-96 border-2 border-gray-300" controls>
+            <source src="/{{ youtube_url }}" type="video/mp4">
             Your browser does not support the video tag.
         </video>
         {% endif %}
@@ -66,7 +71,7 @@
 
     <div class="mt-6">
         {% if image_name %}
-        <img class="w-full h-96 border-2 border-gray-300" src="{% url 'process_image' image_name=image_name %}">
+        <img class="w-full h-96 border-2 border-gray-300" src="/{{ image_name }}">
         {% endif %}
     </div>
 </div>
@@ -80,12 +85,7 @@
 
         socket.onmessage = function (e) {
             const data = JSON.parse(e.data);
-
-            // Log received frame data
-            console.log("Frame data received", data.frame.substring(0, 30)); // Log first 30 chars of the frame data
-
             document.getElementById('webcamFeed').src = 'data:image/jpeg;base64,' + data.frame;
-            console.log("Frame received and set")
         };
 
         socket.onerror = function (error) {
@@ -94,12 +94,10 @@
 
         socket.onopen = function () {
             socket.send(JSON.stringify({ 'command': 'start' }));
-            console.log("WebSocket connection opened");
         };
 
         socket.onclose = function () {
             socket = null;
-            console.log("WebSocket connection closed");
         };
     }
 

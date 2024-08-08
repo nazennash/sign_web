@@ -1,4 +1,4 @@
-# app/utils.py
+# utils.py
 import cv2
 import numpy as np
 import tensorflow as tf
@@ -81,9 +81,6 @@ def generate_webcam_frames():
             print("Error: Failed to capture image.")
             break
         
-        # Log frame capture success
-        # print("Frame captured successfully")
-
         # Preprocess image
         vector, hand_landmarks = preprocess_image(frame)
         if vector is not None:
@@ -99,10 +96,6 @@ def generate_webcam_frames():
             break
         
         frame = buffer.tobytes()
-        
-        # Log encoded frame success
-        # print("Frame encoded successfully: ", frame[:30])  # Log the first 30 bytes of the frame
-
         yield frame
     cap.release()
 
@@ -143,3 +136,15 @@ def generate_video_frames(video_path):
         frame = buffer.tobytes()
         yield frame
     cap.release()
+
+def download_youtube_video(youtube_url):
+    try:
+        from pytubefix import YouTube
+        yt = YouTube(youtube_url)
+        stream = yt.streams.filter(file_extension='mp4').first()
+        output_path = settings.MEDIA_ROOT
+        file_path = stream.download(output_path=output_path)
+        return os.path.basename(file_path)
+    except Exception as e:
+        print(f"Error downloading YouTube video: {e}")
+        return None
