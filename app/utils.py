@@ -33,6 +33,11 @@ def normalize(vector_axis):
     return (vector_axis - vector_axis.min()) / axrange
 
 def preprocess_image(image):
+    if not isinstance(image, np.ndarray):
+        print("Error: Input image is not a numpy array")
+        return None, None
+
+    print(f"Preprocessing image: {type(image)}")  # Debug statement
     image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     result = hands.process(image_rgb)
     image_bgr = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR)
@@ -74,12 +79,15 @@ def generate_webcam_frames():
     if not cap.isOpened():
         print("Error: Could not open webcam.")
         return
-
-    while cap.isOpened():
+    
+    while True:
         success, frame = cap.read()
         if not success:
             print("Error: Failed to capture image.")
             break
+
+        print(f"Captured frame from webcam: {type(frame)}")  # Debug statement
+        print(f"Frame shape: {frame.shape}")  # Debug statement
 
         # Preprocess image
         vector, hand_landmarks = preprocess_image(frame)
@@ -89,28 +97,23 @@ def generate_webcam_frames():
             for landmarks in hand_landmarks:
                 mp_drawing.draw_landmarks(frame, landmarks, mp_hands.HAND_CONNECTIONS)
 
-        # Encode frame
-        ret, buffer = cv2.imencode('.jpg', frame)
-        if not ret:
-            print("Error: Failed to encode image.")
-            break
-
-        yield buffer.tobytes()
-
-    cap.release()
+        yield frame  # Yield the numpy array frame here, not the encoded bytes
 
 def generate_video_frames(video_path):
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
         print("Error: Could not open video.")
         return
-
-    while cap.isOpened():
+    
+    while True:
         success, frame = cap.read()
         if not success:
             print("Error: Failed to capture image.")
             break
 
+        print(f"Captured frame from video: {type(frame)}")  # Debug statement
+        print(f"Frame shape: {frame.shape}")  # Debug statement
+        
         vector, hand_landmarks = preprocess_image(frame)
         if vector is not None:
             predicted_labels, predicted_probabilities = predict(vector)
@@ -118,17 +121,15 @@ def generate_video_frames(video_path):
             for landmarks in hand_landmarks:
                 mp_drawing.draw_landmarks(frame, landmarks, mp_hands.HAND_CONNECTIONS)
 
-        ret, buffer = cv2.imencode('.jpg', frame)
-        if not ret:
-            print("Error: Failed to encode image.")
-            break
-
-        yield buffer.tobytes()
-
-    cap.release()
+        yield frame  # Yield the numpy array frame here, not the encoded bytes
 
 def process_image(image_path):
     image = cv2.imread(image_path)
+    if image is None:
+        print(f"Error: Could not read image from {image_path}")
+        return None
+    print(f"Processing image: {type(image)}")  # Debug statement
+    print(f"Image shape: {image.shape}")  # Debug statement
     vector, hand_landmarks = preprocess_image(image)
     if vector is not None:
         predicted_labels, predicted_probabilities = predict(vector)

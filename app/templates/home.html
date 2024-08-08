@@ -11,7 +11,7 @@
     </div>
 </nav>
 
-<div class="container mx-auto p-4 flex">
+<div class="flex p-4">
     <!-- Sidebar for options -->
     <div class="w-1/4 p-4">
         <!-- Webcam Options -->
@@ -87,29 +87,33 @@
     </div>
 
     <!-- Display Area -->
-    <div class="w-3/4 p-4">
+    <div class="w-1/2 p-4">
         <div class="mb-6 text-center">
             <h1 class="text-3xl font-bold mb-6">Welcome to the Video and Webcam Processing App</h1>
         </div>
 
         <div id="webcamContainer" style="display:none;">
             <img id="webcamFeed" class="w-full max-w-full h-auto border-2 border-gray-300 mx-auto" src="">
-            <div id="predictions" class="mt-4 text-left">
-                <!-- Predictions will be inserted here -->
-            </div>
         </div>
 
         <div id="videoContainer" style="display:none;">
             <img id="videoFeed" class="w-full max-w-full h-auto border-2 border-gray-300 mx-auto" src="">
-            <div id="videoPredictions" class="mt-4 text-left">
-                <!-- Predictions will be inserted here -->
-            </div>
         </div>
 
         <div id="imageContainer" style="display:none;">
             <img id="imageFeed" class="w-full max-w-full h-auto border-2 border-gray-300 mx-auto" src="">
-            <div id="imagePredictions" class="mt-4 text-left">
-                <!-- Predictions will be inserted here -->
+        </div>
+    </div>
+
+    <!-- Predictions Area -->
+    <div class="w-1/4 p-4">
+        <div id="predictions" class="bg-white rounded-lg shadow-lg p-4">
+            <h2 class="text-xl font-bold mb-4">Predictions</h2>
+            <div id="topPrediction" class="mb-4 text-lg font-bold">
+                <!-- Top prediction will be inserted here -->
+            </div>
+            <div id="allPredictions">
+                <!-- All predictions will be inserted here -->
             </div>
         </div>
     </div>
@@ -126,6 +130,8 @@
         document.getElementById('webcamContainer').style.display = 'none';
         document.getElementById('videoContainer').style.display = 'none';
         document.getElementById('imageContainer').style.display = 'none';
+        document.getElementById('topPrediction').innerText = '';
+        document.getElementById('allPredictions').innerHTML = '';
     }
 
     function openWebcam() {
@@ -135,7 +141,9 @@
 
         socket.onmessage = function (e) {
             const data = JSON.parse(e.data);
+            console.log("Received data:", data);
             document.getElementById('webcamFeed').src = 'data:image/jpeg;base64,' + data.frame;
+            updatePredictions(data.predictions);
         };
 
         socket.onerror = function (error) {
@@ -143,10 +151,12 @@
         };
 
         socket.onopen = function () {
+            console.log("WebSocket connection opened");
             socket.send(JSON.stringify({ 'command': 'start', 'video_type': 'webcam' }));
         };
 
         socket.onclose = function () {
+            console.log("WebSocket connection closed");
             socket = null;
         };
     }
@@ -162,7 +172,9 @@
 
         socket.onmessage = function (e) {
             const data = JSON.parse(e.data);
+            console.log("Received data:", data);
             document.getElementById('videoFeed').src = 'data:image/jpeg;base64,' + data.frame;
+            updatePredictions(data.predictions);
         };
 
         socket.onerror = function (error) {
@@ -170,10 +182,12 @@
         };
 
         socket.onopen = function () {
+            console.log("WebSocket connection opened");
             socket.send(JSON.stringify({ 'command': 'start', 'video_type': 'video', 'video_path': videoPath }));
         };
 
         socket.onclose = function () {
+            console.log("WebSocket connection closed");
             socket = null;
         };
     }
@@ -189,7 +203,9 @@
 
         socket.onmessage = function (e) {
             const data = JSON.parse(e.data);
+            console.log("Received data:", data);
             document.getElementById('imageFeed').src = 'data:image/jpeg;base64,' + data.frame;
+            updatePredictions(data.predictions);
         };
 
         socket.onerror = function (error) {
@@ -197,10 +213,12 @@
         };
 
         socket.onopen = function () {
+            console.log("WebSocket connection opened");
             socket.send(JSON.stringify({ 'command': 'start', 'video_type': 'image', 'video_path': imagePath }));
         };
 
         socket.onclose = function () {
+            console.log("WebSocket connection closed");
             socket = null;
         };
     }
@@ -217,7 +235,30 @@
         document.getElementById('uploadImageForm').style.display = 'block';
     }
 
+    function updatePredictions(predictions) {
+        console.log("Updating predictions:", predictions);
+        if (!predictions || predictions.length === 0) {
+            return;
+        }
+
+        const topPrediction = predictions[0];
+        const allPredictions = predictions.slice(1);
+
+        document.getElementById('topPrediction').innerText = `Top Prediction: ${topPrediction.label} (${topPrediction.probability}%)`;
+
+        const allPredictionsElement = document.getElementById('allPredictions');
+        allPredictionsElement.innerHTML = '';
+
+        allPredictions.forEach(prediction => {
+            const predictionElement = document.createElement('p');
+            predictionElement.innerText = `${prediction.label}: ${prediction.probability}%`;
+            allPredictionsElement.appendChild(predictionElement);
+        });
+    }
+
     document.getElementById('startWebcam').addEventListener('click', openWebcam);
     document.getElementById('stopWebcam').addEventListener('click', stopWebcam);
+    document.getElementById('startImage').addEventListener('click', startImage);
+    document.getElementById('stopImage').addEventListener('click', stopImage);
 </script>
 {% endblock %}
