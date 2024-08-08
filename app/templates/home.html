@@ -3,91 +3,114 @@
 {% block title %}Home{% endblock %}
 
 {% block content %}
-<div class="text-center">
-    <h1 class="text-3xl font-bold mb-6">Welcome to the Video and Webcam Processing App</h1>
-
-    <div class="mb-4">
-        <button id="startWebcam" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Start Webcam
-        </button>
-        <button id="stopWebcam" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
-            Stop Webcam
-        </button>
-    </div>
-
-    <div id="webcamContainer" style="display:none;">
-        <img id="webcamFeed" class="w-full h-96 border-2 border-gray-300" src="">
-        <div id="predictions" class="mt-4 text-left">
-            <!-- Predictions will be inserted here -->
+<nav class="bg-gray-800 p-4">
+    <div class="container mx-auto">
+        <div class="flex justify-between items-center">
+            <div class="text-white text-lg font-bold">Video and Webcam Processing App</div>
         </div>
     </div>
+</nav>
 
-    <div class="mt-6">
-        <button onclick="showUploadVideoForm()"
-            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-            Upload Video or YouTube URL
-        </button>
-        <div id="uploadVideoForm" style="display:none;">
-            <form method="post" enctype="multipart/form-data" action="{% url 'upload_video' %}" class="mt-4">
-                {% csrf_token %}
-                {{ video_form.as_p }}
-                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                    Upload
+<div class="container mx-auto p-4 flex">
+    <!-- Sidebar for options -->
+    <div class="w-1/4 p-4">
+        <!-- Webcam Options -->
+        <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+            <h2 class="text-xl font-bold mb-4">Webcam</h2>
+            <div class="mb-4">
+                <button id="startWebcam" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    Start Webcam
                 </button>
-            </form>
-        </div>
-    </div>
-
-    <div class="mt-6">
-        <button onclick="showUploadImageForm()"
-            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-            Upload Image
-        </button>
-        <div id="uploadImageForm" style="display:none;">
-            <form method="post" enctype="multipart/form-data" action="{% url 'upload_image' %}" class="mt-4">
-                {% csrf_token %}
-                {{ image_form.as_p }}
-                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                    Upload
+                <button id="stopWebcam" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                    Stop Webcam
                 </button>
-            </form>
+            </div>
+        </div>
+
+        <!-- Video Upload Options -->
+        <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+            <h2 class="text-xl font-bold mb-4">Video Upload</h2>
+            <button onclick="showUploadVideoForm()"
+                class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                Upload Video or YouTube URL
+            </button>
+            <div id="uploadVideoForm" style="display:none;" class="mt-4">
+                <form method="post" enctype="multipart/form-data" action="{% url 'upload_video' %}">
+                    {% csrf_token %}
+                    {{ video_form.as_p }}
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                        Upload
+                    </button>
+                </form>
+            </div>
+            <div class="mt-6">
+                {% if video_name %}
+                <button id="playVideo" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                    onclick="startVideo('{{ video_name }}')">Play Video</button>
+                <button id="stopVideo" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                    onclick="stopVideo()">Stop Video</button>
+                {% elif youtube_url %}
+                <button id="playYoutubeVideo"
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                    onclick="startVideo('{{ youtube_url }}')">Play YouTube Video</button>
+                <button id="stopYoutubeVideo" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                    onclick="stopVideo()">Stop YouTube Video</button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Image Upload Options -->
+        <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+            <h2 class="text-xl font-bold mb-4">Image Upload</h2>
+            <button onclick="showUploadImageForm()"
+                class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                Upload Image
+            </button>
+            <div id="uploadImageForm" style="display:none;" class="mt-4">
+                <form method="post" enctype="multipart/form-data" action="{% url 'upload_image' %}">
+                    {% csrf_token %}
+                    {{ image_form.as_p }}
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                        Upload
+                    </button>
+                </form>
+            </div>
+            <div class="mt-6">
+                {% if image_name %}
+                <button id="startImage" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                    onclick="startImage('{{ image_name }}')">Start Image</button>
+                <button id="stopImage" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                    onclick="stopImage()">Stop Image</button>
+                {% endif %}
+            </div>
         </div>
     </div>
 
-    <div class="mt-6">
-        {% if video_name %}
-        <button id="playVideo" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            onclick="startVideo('{{ video_name }}')">Play Video</button>
-        <button id="stopVideo" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-            onclick="stopVideo()">Stop Video</button>
-        {% elif youtube_url %}
-        <button id="playYoutubeVideo" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            onclick="startVideo('{{ youtube_url }}')">Play YouTube Video</button>
-        <button id="stopYoutubeVideo" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-            onclick="stopVideo()">Stop YouTube Video</button>
-        {% endif %}
-    </div>
-
-    <div id="videoContainer" style="display:none;">
-        <img id="videoFeed" class="w-full h-96 border-2 border-gray-300" src="">
-        <div id="videoPredictions" class="mt-4 text-left">
-            <!-- Predictions will be inserted here -->
+    <!-- Display Area -->
+    <div class="w-3/4 p-4">
+        <div class="mb-6 text-center">
+            <h1 class="text-3xl font-bold mb-6">Welcome to the Video and Webcam Processing App</h1>
         </div>
-    </div>
 
-    <div class="mt-6">
-        {% if image_name %}
-        <button id="startImage" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            onclick="startImage('{{ image_name }}')">Start Image</button>
-        <button id="stopImage" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-            onclick="stopImage()">Stop Image</button>
-        {% endif %}
-    </div>
+        <div id="webcamContainer" style="display:none;">
+            <img id="webcamFeed" class="w-full max-w-full h-auto border-2 border-gray-300 mx-auto" src="">
+            <div id="predictions" class="mt-4 text-left">
+                <!-- Predictions will be inserted here -->
+            </div>
+        </div>
 
-    <div id="imageContainer" style="display:none;">
-        <img id="imageFeed" class="w-full h-96 border-2 border-gray-300" src="">
-        <div id="imagePredictions" class="mt-4 text-left">
-            <!-- Predictions will be inserted here -->
+        <div id="videoContainer" style="display:none;">
+            <img id="videoFeed" class="w-full max-w-full h-auto border-2 border-gray-300 mx-auto" src="">
+            <div id="videoPredictions" class="mt-4 text-left">
+                <!-- Predictions will be inserted here -->
+            </div>
+        </div>
+
+        <div id="imageContainer" style="display:none;">
+            <img id="imageFeed" class="w-full max-w-full h-auto border-2 border-gray-300 mx-auto" src="">
+            <div id="imagePredictions" class="mt-4 text-left">
+                <!-- Predictions will be inserted here -->
+            </div>
         </div>
     </div>
 </div>
@@ -197,5 +220,4 @@
     document.getElementById('startWebcam').addEventListener('click', openWebcam);
     document.getElementById('stopWebcam').addEventListener('click', stopWebcam);
 </script>
-
 {% endblock %}
