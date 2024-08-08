@@ -5,7 +5,7 @@ from channels.generic.websocket import WebsocketConsumer
 import json
 import os
 from django.conf import settings
-from .utils import generate_webcam_frames, generate_video_frames, process_image
+from .utils import generate_webcam_frames, generate_video_frames, process_image, download_youtube_video
 
 class VideoConsumer(WebsocketConsumer):
     def connect(self):
@@ -27,7 +27,11 @@ class VideoConsumer(WebsocketConsumer):
             elif video_type == 'video':
                 self.stream_video(video_path)
             elif video_type == 'youtube':
-                self.stream_video(video_path)
+                youtube_path = download_youtube_video(video_path)
+                if youtube_path:
+                    self.stream_video(os.path.join(settings.MEDIA_ROOT, youtube_path))
+                else:
+                    self.send(text_data=json.dumps({'error': 'Failed to download YouTube video'}))
             elif video_type == 'image':
                 self.process_image(video_path)
     

@@ -7,7 +7,7 @@ import mediapipe as mp
 import os
 import pandas as pd
 from django.conf import settings
-from pytube import YouTube
+from pytubefix import YouTube, exceptions
 
 mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
@@ -142,9 +142,15 @@ def download_youtube_video(youtube_url):
     try:
         yt = YouTube(youtube_url)
         stream = yt.streams.filter(file_extension='mp4').first()
+        if stream is None:
+            print("No valid stream found.")
+            return None
         output_path = settings.MEDIA_ROOT
         file_path = stream.download(output_path=output_path)
         return os.path.basename(file_path)
-    except Exception as e:
+    except exceptions.PytubeError as e:
         print(f"Error downloading YouTube video: {e}")
+        return None
+    except Exception as e:
+        print(f"General error: {e}")
         return None

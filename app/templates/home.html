@@ -57,11 +57,11 @@
 
     <div class="mt-6">
         {% if video_name %}
-        <button id="startVideo" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            onclick="startVideo('{{ video_name }}')">Start Video</button>
+        <button id="playVideo" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            onclick="startVideo('{{ video_name }}')">Play Video</button>
         {% elif youtube_url %}
-        <button id="startYoutubeVideo" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            onclick="startVideo('{{ youtube_url }}')">Start YouTube Video</button>
+        <button id="playYoutubeVideo" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            onclick="startVideo('{{ youtube_url }}')">Play YouTube Video</button>
         {% endif %}
     </div>
 
