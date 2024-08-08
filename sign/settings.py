@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-8!k(^mwdr(hub57$=_=hahn!kam$$3#=q$83^p@wkb#kpkg1o_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -85,11 +85,15 @@ ASGI_APPLICATION = 'sign.asgi.application'
 
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('127.0.0.1', 6380)],
-        },
-    },
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    }
+    
+    # 'default': {
+    #     'BACKEND': 'channels_redis.core.RedisChannelLayer',
+    #     'CONFIG': {
+    #         "hosts": [('127.0.0.1', 6380)],
+    #     },
+    # },
 }
 
 # Database

@@ -1,178 +1,276 @@
-<!-- templates/home.html -->
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
 
-{% block title %}Home{% endblock %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Home{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+</head>
 
-{% block content %}
-<div class="text-center">
-    <h1 class="text-3xl font-bold mb-6">Welcome to the Video and Webcam Processing App</h1>
-
-    <div class="mb-4">
-        <button id="startWebcam" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Start Webcam
-        </button>
-        <button id="stopWebcam" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
-            Stop Webcam
-        </button>
-    </div>
-
-    <div id="webcamContainer" style="display:none;">
-        <img id="webcamFeed" class="w-full h-96 border-2 border-gray-300" src="">
-        <div id="predictions" class="mt-4 text-left">
-            <!-- Predictions will be inserted here -->
+<body>
+    <nav class="bg-gray-800 p-4">
+        <div class="container mx-auto">
+            <div class="flex justify-between items-center">
+                <div class="text-white text-lg font-bold">Video and Webcam Processing App</div>
+            </div>
         </div>
-    </div>
+    </nav>
 
-    <div class="mt-6">
-        <button onclick="showUploadVideoForm()"
-            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-            Upload Video or YouTube URL
-        </button>
-        <div id="uploadVideoForm" style="display:none;">
-            <form method="post" enctype="multipart/form-data" action="{% url 'upload_video' %}" class="mt-4">
-                {% csrf_token %}
-                {{ video_form.as_p }}
-                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                    Upload
+    <div class="flex p-4">
+        <!-- Sidebar for options -->
+        <div class="w-1/4 p-4">
+            <!-- Webcam Options -->
+            <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+                <h2 class="text-xl font-bold mb-4">Webcam</h2>
+                <div class="mb-4">
+                    <button id="startWebcam"
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                        Start Webcam
+                    </button>
+                    <button id="stopWebcam" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                        Stop Webcam
+                    </button>
+                </div>
+            </div>
+
+            <!-- Video Upload Options -->
+            <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+                <h2 class="text-xl font-bold mb-4">Video Upload</h2>
+                <button onclick="showUploadVideoForm()"
+                    class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                    Upload Video or YouTube URL
                 </button>
-            </form>
-        </div>
-    </div>
+                <div id="uploadVideoForm" style="display:none;" class="mt-4">
+                    <form method="post" enctype="multipart/form-data" action="{% url 'upload_video' %}">
+                        {% csrf_token %}
+                        {{ video_form.as_p }}
+                        <button type="submit"
+                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                            Upload
+                        </button>
+                    </form>
+                </div>
+                <div class="mt-6">
+                    {% if video_name %}
+                    <button id="playVideo" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                        onclick="startVideo('{{ video_name }}')">Play Video</button>
+                    <button id="stopVideo" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                        onclick="stopVideo()">Stop Video</button>
+                    {% elif youtube_url %}
+                    <button id="playYoutubeVideo"
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                        onclick="startVideo('{{ youtube_url }}')">Play YouTube Video</button>
+                    <button id="stopYoutubeVideo"
+                        class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                        onclick="stopVideo()">Stop YouTube Video</button>
+                    {% endif %}
+                </div>
+            </div>
 
-    <div class="mt-6">
-        <button onclick="showUploadImageForm()"
-            class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-            Upload Image
-        </button>
-        <div id="uploadImageForm" style="display:none;">
-            <form method="post" enctype="multipart/form-data" action="{% url 'upload_image' %}" class="mt-4">
-                {% csrf_token %}
-                {{ image_form.as_p }}
-                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                    Upload
+            <!-- Image Upload Options -->
+            <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+                <h2 class="text-xl font-bold mb-4">Image Upload</h2>
+                <button onclick="showUploadImageForm()"
+                    class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                    Upload Image
                 </button>
-            </form>
+                <div id="uploadImageForm" style="display:none;" class="mt-4">
+                    <form method="post" enctype="multipart/form-data" action="{% url 'upload_image' %}">
+                        {% csrf_token %}
+                        {{ image_form.as_p }}
+                        <button type="submit"
+                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                            Upload
+                        </button>
+                    </form>
+                </div>
+                <div class="mt-6">
+                    {% if image_name %}
+                    <button id="startImage" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                        onclick="startImage('{{ image_name }}')">Start Image</button>
+                    <button id="stopImage" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+                        onclick="stopImage()">Stop Image</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Display Area -->
+        <div class="w-1/2 p-4">
+            <div class="mb-6 text-center">
+                <h1 class="text-3xl font-bold mb-6">Welcome to the Video and Webcam Processing App</h1>
+            </div>
+
+            <div id="webcamContainer" style="display:none;">
+                <img id="webcamFeed" class="w-full max-w-full h-auto border-2 border-gray-300 mx-auto" src="">
+            </div>
+
+            <div id="videoContainer" style="display:none;">
+                <img id="videoFeed" class="w-full max-w-full h-auto border-2 border-gray-300 mx-auto" src="">
+            </div>
+
+            <div id="imageContainer" style="display:none;">
+                <img id="imageFeed" class="w-full max-w-full h-auto border-2 border-gray-300 mx-auto" src="">
+            </div>
+        </div>
+
+        <!-- Predictions Area -->
+        <div class="w-1/4 p-4">
+            <div id="predictions" class="bg-white rounded-lg shadow-lg p-4">
+                <h2 class="text-xl font-bold mb-4">Predictions</h2>
+                <div id="topPrediction" class="mb-4 text-lg font-bold">
+                    <!-- Top prediction will be inserted here -->
+                </div>
+                <div id="allPredictions">
+                    <!-- All predictions will be inserted here -->
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="mt-6">
-        {% if video_name %}
-        <button id="playVideo" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            onclick="startVideo('{{ video_name }}')">Play Video</button>
-        {% elif youtube_url %}
-        <button id="playYoutubeVideo" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            onclick="startVideo('{{ youtube_url }}')">Play YouTube Video</button>
-        {% endif %}
-    </div>
+    <script>
+        let socket;
 
-    <div id="videoContainer" style="display:none;">
-        <img id="videoFeed" class="w-full h-96 border-2 border-gray-300" src="">
-        <div id="videoPredictions" class="mt-4 text-left">
-            <!-- Predictions will be inserted here -->
-        </div>
-    </div>
-
-    <div class="mt-6">
-        {% if image_name %}
-        <button id="startImage" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            onclick="startImage('{{ image_name }}')">Start Image</button>
-        {% endif %}
-    </div>
-
-    <div id="imageContainer" style="display:none;">
-        <img id="imageFeed" class="w-full h-96 border-2 border-gray-300" src="">
-        <div id="imagePredictions" class="mt-4 text-left">
-            <!-- Predictions will be inserted here -->
-        </div>
-    </div>
-</div>
-
-<script>
-    let socket;
-
-    function openWebcam() {
-        document.getElementById('webcamContainer').style.display = 'block';
-        socket = new WebSocket('ws://' + window.location.host + '/ws/video_feed/');
-
-        socket.onmessage = function (e) {
-            const data = JSON.parse(e.data);
-            document.getElementById('webcamFeed').src = 'data:image/jpeg;base64,' + data.frame;
-        };
-
-        socket.onerror = function (error) {
-            console.error('WebSocket error:', error);
-        };
-
-        socket.onopen = function () {
-            socket.send(JSON.stringify({ 'command': 'start', 'video_type': 'webcam' }));
-        };
-
-        socket.onclose = function () {
-            socket = null;
-        };
-    }
-
-    function closeWebcam() {
-        document.getElementById('webcamContainer').style.display = 'none';
-        if (socket) {
-            socket.send(JSON.stringify({ 'command': 'stop' }));
-            socket.close();
+        function closeAllStreams() {
+            if (socket) {
+                socket.send(JSON.stringify({ 'command': 'stop' }));
+                socket.close();
+            }
+            document.getElementById('webcamContainer').style.display = 'none';
+            document.getElementById('videoContainer').style.display = 'none';
+            document.getElementById('imageContainer').style.display = 'none';
+            document.getElementById('topPrediction').innerText = '';
+            document.getElementById('allPredictions').innerHTML = '';
         }
-    }
 
-    function startVideo(videoPath) {
-        document.getElementById('videoContainer').style.display = 'block';
-        socket = new WebSocket('ws://' + window.location.host + '/ws/video_feed/');
+        function openWebcam() {
+            closeAllStreams();
+            document.getElementById('webcamContainer').style.display = 'block';
+            socket = new WebSocket('ws://' + window.location.host + '/ws/video_feed/');
 
-        socket.onmessage = function (e) {
-            const data = JSON.parse(e.data);
-            document.getElementById('videoFeed').src = 'data:image/jpeg;base64,' + data.frame;
-        };
+            socket.onmessage = function (e) {
+                const data = JSON.parse(e.data);
+                console.log("Received data:", data);
+                document.getElementById('webcamFeed').src = 'data:image/jpeg;base64,' + data.frame;
+                updatePredictions(data.predictions);
+            };
 
-        socket.onerror = function (error) {
-            console.error('WebSocket error:', error);
-        };
+            socket.onerror = function (error) {
+                console.error('WebSocket error:', error);
+            };
 
-        socket.onopen = function () {
-            socket.send(JSON.stringify({ 'command': 'start', 'video_type': 'video', 'video_path': videoPath }));
-        };
+            socket.onopen = function () {
+                console.log("WebSocket connection opened");
+                socket.send(JSON.stringify({ 'command': 'start', 'video_type': 'webcam' }));
+            };
 
-        socket.onclose = function () {
-            socket = null;
-        };
-    }
+            socket.onclose = function () {
+                console.log("WebSocket connection closed");
+                socket = null;
+            };
+        }
 
-    function startImage(imagePath) {
-        document.getElementById('imageContainer').style.display = 'block';
-        socket = new WebSocket('ws://' + window.location.host + '/ws/video_feed/');
+        function stopWebcam() {
+            closeAllStreams();
+        }
 
-        socket.onmessage = function (e) {
-            const data = JSON.parse(e.data);
-            document.getElementById('imageFeed').src = 'data:image/jpeg;base64,' + data.frame;
-        };
+        function startVideo(videoPath) {
+            closeAllStreams();
+            document.getElementById('videoContainer').style.display = 'block';
+            socket = new WebSocket('ws://' + window.location.host + '/ws/video_feed/');
 
-        socket.onerror = function (error) {
-            console.error('WebSocket error:', error);
-        };
+            socket.onmessage = function (e) {
+                const data = JSON.parse(e.data);
+                console.log("Received data:", data);
+                document.getElementById('videoFeed').src = 'data:image/jpeg;base64,' + data.frame;
+                updatePredictions(data.predictions);
+            };
 
-        socket.onopen = function () {
-            socket.send(JSON.stringify({ 'command': 'start', 'video_type': 'image', 'video_path': imagePath }));
-        };
+            socket.onerror = function (error) {
+                console.error('WebSocket error:', error);
+            };
 
-        socket.onclose = function () {
-            socket = null;
-        };
-    }
+            socket.onopen = function () {
+                console.log("WebSocket connection opened");
+                socket.send(JSON.stringify({ 'command': 'start', 'video_type': 'video', 'video_path': videoPath }));
+            };
 
-    function showUploadVideoForm() {
-        document.getElementById('uploadVideoForm').style.display = 'block';
-    }
+            socket.onclose = function () {
+                console.log("WebSocket connection closed");
+                socket = null;
+            };
+        }
 
-    function showUploadImageForm() {
-        document.getElementById('uploadImageForm').style.display = 'block';
-    }
+        function stopVideo() {
+            closeAllStreams();
+        }
 
-    document.getElementById('startWebcam').addEventListener('click', openWebcam);
-    document.getElementById('stopWebcam').addEventListener('click', closeWebcam);
-</script>
-{% endblock %}
+        function startImage(imagePath) {
+            closeAllStreams();
+            document.getElementById('imageContainer').style.display = 'block';
+            socket = new WebSocket('ws://' + window.location.host + '/ws/video_feed/');
+
+            socket.onmessage = function (e) {
+                const data = JSON.parse(e.data);
+                console.log("Received data:", data);
+                document.getElementById('imageFeed').src = 'data:image/jpeg;base64,' + data.frame;
+                updatePredictions(data.predictions);
+            };
+
+            socket.onerror = function (error) {
+                console.error('WebSocket error:', error);
+            };
+
+            socket.onopen = function () {
+                console.log("WebSocket connection opened");
+                socket.send(JSON.stringify({ 'command': 'start', 'video_type': 'image', 'video_path': imagePath }));
+            };
+
+            socket.onclose = function () {
+                console.log("WebSocket connection closed");
+                socket = null;
+            };
+        }
+
+        function stopImage() {
+            closeAllStreams();
+        }
+
+        function showUploadVideoForm() {
+            document.getElementById('uploadVideoForm').style.display = 'block';
+        }
+
+        function showUploadImageForm() {
+            document.getElementById('uploadImageForm').style.display = 'block';
+        }
+
+        function updatePredictions(predictions) {
+            console.log("Updating predictions:", predictions);
+            if (!predictions || predictions.length === 0) {
+                return;
+            }
+
+            const topPrediction = predictions[0];
+            const allPredictions = predictions.slice(1);
+
+            document.getElementById('topPrediction').innerText = `Top Prediction: ${topPrediction.label} (${topPrediction.probability}%)`;
+
+            const allPredictionsElement = document.getElementById('allPredictions');
+            allPredictionsElement.innerHTML = '';
+
+            predictions.forEach(prediction => {
+                const predictionElement = document.createElement('p');
+                predictionElement.innerText = `${prediction.label}: ${prediction.probability}%`;
+                allPredictionsElement.appendChild(predictionElement);
+            });
+        }
+
+        document.getElementById('startWebcam').addEventListener('click', openWebcam);
+        document.getElementById('stopWebcam').addEventListener('click', stopWebcam);
+        document.getElementById('startImage').addEventListener('click', () => startImage('{{ image_name }}'));
+        document.getElementById('stopImage').addEventListener('click', stopImage);
+    </script>
+</body>
+
+</html>

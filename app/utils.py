@@ -1,4 +1,3 @@
-# utils.py
 import cv2
 import numpy as np
 import tensorflow as tf
@@ -34,10 +33,15 @@ def normalize(vector_axis):
     return (vector_axis - vector_axis.min()) / axrange
 
 def preprocess_image(image):
+    print(f"Preprocessing image: {type(image)}")  
+    if not isinstance(image, np.ndarray):
+        print("Error: Input is not a valid numpy array")
+        return None, None
+
     image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     result = hands.process(image_rgb)
     image_bgr = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR)
-    
+
     if result.multi_hand_landmarks:
         for hand_landmarks in result.multi_hand_landmarks:
             vector_x, vector_y, vector_z = [], [], []
@@ -45,26 +49,36 @@ def preprocess_image(image):
                 vector_x.append(landmark.x)
                 vector_y.append(landmark.y)
                 vector_z.append(landmark.z)
-            
+
             normalized_vector_x = normalize(vector_x)
             normalized_vector_y = normalize(vector_y)
             normalized_vector_z = normalize(vector_z)
-            
+
             vector = np.concatenate([normalized_vector_x, normalized_vector_y, normalized_vector_z])
+            print(f"Hand landmarks vector: {vector}")  
             return vector, result.multi_hand_landmarks
+    print("No hand landmarks detected")  
     return None, None
 
+
+
+
 def predict(vector):
+    print(f"Predicting with vector: {vector}")  
     vector = vector.reshape(1, -1)
     predictions = model.predict(vector)
     predicted_probabilities = predictions[0]
     top_indices = np.argsort(predicted_probabilities)[-5:]
-    
+
     valid_indices = [i for i in top_indices[::-1] if i < len(labels)]
     predicted_labels = [labels[i] for i in valid_indices]
     predicted_probabilities = [predicted_probabilities[i] * 100 for i in valid_indices]
-    
+
+    print(f"Predicted labels: {predicted_labels}")  
+    print(f"Predicted probabilities: {predicted_probabilities}")  
+
     return predicted_labels, predicted_probabilities
+
 
 def display_predictions(image, labels, probabilities):
     for i in range(len(labels)):
@@ -81,8 +95,11 @@ def generate_webcam_frames():
         if not success:
             print("Error: Failed to capture image.")
             break
+
+        print(f"Captured frame from webcam: {type(frame)}")  
+        print(f"Frame shape: {frame.shape}")  
+
         
-        # Preprocess image
         vector, hand_landmarks = preprocess_image(frame)
         if vector is not None:
             predicted_labels, predicted_probabilities = predict(vector)
@@ -90,25 +107,7 @@ def generate_webcam_frames():
             for landmarks in hand_landmarks:
                 mp_drawing.draw_landmarks(frame, landmarks, mp_hands.HAND_CONNECTIONS)
 
-        # Encode frame
-        ret, buffer = cv2.imencode('.jpg', frame)
-        if not ret:
-            print("Error: Failed to encode image.")
-            break
-        
-        frame = buffer.tobytes()
-        yield frame
-    cap.release()
-
-def process_image(image_path):
-    image = cv2.imread(image_path)
-    vector, hand_landmarks = preprocess_image(image)
-    if vector is not None:
-        predicted_labels, predicted_probabilities = predict(vector)
-        display_predictions(image, predicted_labels, predicted_probabilities)
-        for landmarks in hand_landmarks:
-            mp_drawing.draw_landmarks(image, landmarks, mp_hands.HAND_CONNECTIONS)
-    return image
+        yield frame  
 
 def generate_video_frames(video_path):
     cap = cv2.VideoCapture(video_path)
@@ -121,6 +120,9 @@ def generate_video_frames(video_path):
         if not success:
             print("Error: Failed to capture image.")
             break
+
+        print(f"Captured frame from video: {type(frame)}")  
+        print(f"Frame shape: {frame.shape}")  
         
         vector, hand_landmarks = preprocess_image(frame)
         if vector is not None:
@@ -129,14 +131,22 @@ def generate_video_frames(video_path):
             for landmarks in hand_landmarks:
                 mp_drawing.draw_landmarks(frame, landmarks, mp_hands.HAND_CONNECTIONS)
 
-        ret, buffer = cv2.imencode('.jpg', frame)
-        if not ret:
-            print("Error: Failed to encode image.")
-            break
-        
-        frame = buffer.tobytes()
-        yield frame
-    cap.release()
+        yield frame  
+
+def process_image(image_path):
+    image = cv2.imread(image_path)
+    if image is None:
+        print(f"Error: Could not read image from {image_path}")
+        return None
+    print(f"Processing image: {type(image)}")  
+    print(f"Image shape: {image.shape}")  
+    vector, hand_landmarks = preprocess_image(image)
+    if vector is not None:
+        predicted_labels, predicted_probabilities = predict(vector)
+        display_predictions(image, predicted_labels, predicted_probabilities)
+        for landmarks in hand_landmarks:
+            mp_drawing.draw_landmarks(image, landmarks, mp_hands.HAND_CONNECTIONS)
+    return image
 
 def download_youtube_video(youtube_url):
     try:
