@@ -5,7 +5,7 @@ import os
 import numpy as np
 from channels.generic.websocket import WebsocketConsumer
 from django.conf import settings
-from .utils import generate_webcam_frames, generate_video_frames, process_image, download_youtube_video, preprocess_image, predict
+from .utils import generate_webcam_frames, generate_video_frames, preprocess_image, predict, download_youtube_video
 from threading import Thread
 
 class VideoConsumer(WebsocketConsumer):
@@ -60,7 +60,7 @@ class VideoConsumer(WebsocketConsumer):
             if not self.running or not self.streaming:
                 break
             if frame is not None:
-                print(f"Captured frame from webcam: {type(frame)}")  # Debug statement
+                print(f"Captured frame from webcam: {type(frame)}")  
                 if not isinstance(frame, np.ndarray):
                     print("Error: frame is not a numpy array")
                     continue
@@ -80,7 +80,7 @@ class VideoConsumer(WebsocketConsumer):
             if not self.running or not self.streaming:
                 break
             if frame is not None:
-                print(f"Captured frame from video: {type(frame)}")  # Debug statement
+                print(f"Captured frame from video: {type(frame)}")  
                 if not isinstance(frame, np.ndarray):
                     print("Error: frame is not a numpy array")
                     continue
@@ -96,19 +96,20 @@ class VideoConsumer(WebsocketConsumer):
                     self.send(text_data=json.dumps({'frame': encoded_frame, 'predictions': predictions}))
 
     def process_image(self, image_path):
-        frame = process_image(image_path)
-        if not self.running or not self.streaming:
-            return
+        frame = cv2.imread(image_path)
         if frame is None or not isinstance(frame, np.ndarray):
-            print("Error: frame is not a valid numpy array")
+            print(f"Error: frame is not a valid numpy array, got {type(frame)} instead")
             return
-        print(f"Processing image: {type(frame)}")  # Debug statement
+        print(f"Processing image: {type(frame)}")  
+        print(f"Image shape: {frame.shape}")  
+
         vector, hand_landmarks = preprocess_image(frame)
         predictions = []
         if vector is not None:
             predicted_labels, predicted_probabilities = predict(vector)
             predictions = [{"label": label, "probability": prob} for label, prob in zip(predicted_labels, predicted_probabilities)]
         print(f"Image predictions: {predictions}")
+
         ret, buffer = cv2.imencode('.jpg', frame)
         if ret:
             encoded_frame = base64.b64encode(buffer).decode('utf-8')
